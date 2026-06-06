@@ -9,6 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from orchestrator.db.client import get_db, close_db
 from orchestrator.api.events import router as events_router
 from orchestrator.api.slas import router as slas_router
+from orchestrator.webhook import router as webhook_router
+from orchestrator.api.incidents import router as incidents_router
+from orchestrator.api.connectors import router as connectors_router
 from orchestrator.scheduler import scheduler_loop
 from orchestrator.invoker import close_runner
 
@@ -39,6 +42,9 @@ app.add_middleware(
 
 app.include_router(events_router)
 app.include_router(slas_router)
+app.include_router(webhook_router)
+app.include_router(incidents_router)
+app.include_router(connectors_router)
 
 
 @app.get("/health")
