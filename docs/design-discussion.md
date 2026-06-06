@@ -413,6 +413,9 @@ Agent runs in-process with orchestrator. Fivetran MCP launches as stdio subproce
 - Layer 1 (Deterministic): Computes facts. Fast-exits if clearly healthy.
 - Layer 2 (Gemini): Reasons about business context when risk is unclear or elevated.
 
+**Implementation deviation (intentional):**
+During design we said "Layer 1 lives in the agent." During implementation, we put a lightweight `is_green()` pre-filter in the orchestrator's scheduler. This uses ONLY cached MongoDB stats (syncs_remaining >= 3 AND failure_rate < 5%) to skip agent invocation entirely for trivially healthy connectors. This is a cost optimization, not a risk assessment. The agent still owns all actual reasoning. The orchestrator never touches Fivetran — it uses cached `sync_frequency_seconds` from the `connector_health` collection.
+
 ### Confidence as Categories (Not Numbers)
 
 **Problem:** Returning `"confidence": 0.87` invites "what model? what accuracy?"
