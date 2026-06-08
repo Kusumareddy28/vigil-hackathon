@@ -6,15 +6,22 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class SLADependency(BaseModel):
+    connector_id: str
+    name: str
+    source: str
+
 class SLADefinition(BaseModel):
     id: str = Field(alias="_id")
     name: str
-    connector_id: str
+    connector_id: str  # primary connector (backward compat)
     connector_name: str
+    dependencies: list[SLADependency] = Field(default_factory=list)
     deadline_cron: str
     deadline_description: str
     buffer_hours: int = 3
     stakeholder: str
+    stakeholder_role: str = ""
     business_impact: str
     impact_context: str
     escalation_channel: str = ""

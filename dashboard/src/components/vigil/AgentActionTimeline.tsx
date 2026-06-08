@@ -1,24 +1,28 @@
 import { motion } from "framer-motion";
-import { Eye, Scale, Zap, Activity, RefreshCw } from "lucide-react";
+import { Eye, Scale, Zap, Activity, RefreshCw, CheckCircle2 } from "lucide-react";
 import type { AgentEvent } from "@/lib/vigil/types";
 
-const ICONS = {
+const ICONS: Record<string, any> = {
   detect: Eye,
   evaluate: Scale,
   act: Zap,
   monitor: Activity,
   update: RefreshCw,
-} as const;
+  recover: CheckCircle2,
+};
 
-export function AgentActionTimeline({ events }: { events: AgentEvent[] }) {
+export function AgentActionTimeline({ events = [] }: { events?: AgentEvent[] }) {
   return (
     <div className="glass rounded-2xl p-6">
       <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Agent action timeline</p>
       <p className="font-display text-lg text-gradient mt-1">What the agent has done</p>
 
+      {events.length === 0 && (
+        <p className="mt-4 text-xs text-muted-foreground">No agent actions recorded yet.</p>
+      )}
       <ol className="mt-6 relative border-l border-border/80 ml-3">
         {events.map((e, i) => {
-          const Icon = ICONS[e.kind];
+          const Icon = ICONS[e.kind] || Activity;
           return (
             <motion.li
               key={i}

@@ -1,17 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/vigil/AppShell";
 import { StatusBadge } from "@/components/vigil/StatusBadge";
-import { incidents } from "@/lib/vigil/mock-data";
 import { motion } from "framer-motion";
 import { CircleUser, Bot } from "lucide-react";
 
 export const Route = createFileRoute("/incidents")({
-  head: () => ({
-    meta: [
-      { title: "Incidents — Vigil" },
-      { name: "description", content: "Detected anomalies, agent actions, and outcomes across all monitored decisions." },
-    ],
-  }),
   component: IncidentsPage,
 });
 
@@ -23,6 +17,18 @@ const SEVERITY_CLASS: Record<string, string> = {
 };
 
 function IncidentsPage() {
+  const { data } = useQuery({
+    queryKey: ["incidents"],
+    queryFn: async () => {
+      const res = await fetch("/api/incidents");
+      if (!res.ok) throw new Error("Failed to fetch incidents");
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  const incidents = data?.incidents ?? [];
+
   return (
     <AppShell
       title="Incidents"
@@ -36,61 +42,46 @@ function IncidentsPage() {
           <div className="col-span-3">Agent action</div>
           <div className="col-span-1 text-right">Outcome</div>
         </div>
-        {incidents.map((inc, i) => (
-          <motion.div
-            key={inc.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
-            className="grid grid-cols-12 gap-4 px-6 py-5 items-center border-b border-border/40 last:border-0 hover:bg-accent/30 transition"
-          >
-            <div className="col-span-4">
-              <p className="text-sm">{inc.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Affects · {inc.affectedDecision}</p>
-            </div>
-            <div className="col-span-2">
-              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${SEVERITY_CLASS[inc.severity]}`}>
-                {inc.severity}
-              </span>
-            </div>
-            <div className="col-span-2 text-sm text-muted-foreground font-mono text-xs">{inc.detectedAt}</div>
-            <div className="col-span-3">
-              <p className="text-sm text-foreground/90 flex items-start gap-1.5">
-                {inc.humanIntervention ? <CircleUser className="size-3.5 mt-0.5 text-risk" /> : <Bot className="size-3.5 mt-0.5 text-ai" />}
-                <span>{inc.agentAction}</span>
-              </p>
-            </div>
-            <div className="col-span-1 flex justify-end">
-              <StatusBadge status={inc.outcome} />
-            </div>
-          </motion.div>
-        ))}
-      </div>
+        {incidents.length === 0 ? (
+          <div className="px-6 py-8 text-sm text-muted-foreground">No incidents recorded yet.</div>
+        ) : (
+          incidents.map((inc: any, i: number) => {
+            const severity = inc.failure_type === "AUTH_EXPIRED" ? "critical" : inc.failure_type === "SCHEMA_CHANGE" ? "high" : "medium";
+            const outcome = inc.resolved_at ? "recovered" : inc.human_intervention_required ? "human_intervention" : "in_progress";
+            const agentAction = inc.agent_actions?.map((a: any) => typeof a === "string" ? a : a.action).join(" → ") || "Investigating...";
+            const detected = inc.detected_at ? new Date(inc.detected_at).toLocaleString([], { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" }) : "";
 
-      <div className="mt-10">
-        <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Incident timeline · last 7 days</p>
-        <div className="mt-3 glass rounded-2xl p-6">
-          <div className="relative h-24">
-            <div className="absolute inset-x-0 top-1/2 h-px bg-border" />
-            {[8, 22, 41, 55, 70, 88].map((p, i) => (
+            return (
               <motion.div
-                key={i}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.1 * i }}
-                className="absolute top-1/2 -translate-y-1/2 size-3 rounded-full"
-                style={{
-                  left: `${p}%`,
-                  background: i === 3 ? "var(--blocked)" : i === 1 ? "var(--risk)" : "var(--trusted)",
-                  boxShadow: "0 0 0 4px color-mix(in oklab, currentColor 0%, transparent)",
-                }}
-              />
-            ))}
-          </div>
-          <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-            <span>7d ago</span><span>now</span>
-          </div>
-        </div>
+                key={inc._id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }}
+                className="grid grid-cols-12 gap-4 px-6 py-5 items-center border-b border-border/40 last:border-0 hover:bg-accent/30 transition"
+              >
+                <div className="col-span-4">
+                  <p className="text-sm">{inc.failure_type?.replace(/_/g, " ")}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Connector: {inc.connector_id}</p>
+                </div>
+                <div className="col-span-2">
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${SEVERITY_CLASS[severity] || ""}`}>
+                    {severity}
+                  </span>
+                </div>
+                <div className="col-span-2 text-xs text-muted-foreground font-mono">{detected}</div>
+                <div className="col-span-3">
+                  <p className="text-sm text-foreground/90 flex items-start gap-1.5">
+                    {inc.human_intervention_required ? <CircleUser className="size-3.5 mt-0.5 text-risk" /> : <Bot className="size-3.5 mt-0.5 text-ai" />}
+                    <span className="truncate">{agentAction}</span>
+                  </p>
+                </div>
+                <div className="col-span-1 flex justify-end">
+                  <StatusBadge status={outcome} />
+                </div>
+              </motion.div>
+            );
+          })
+        )}
       </div>
     </AppShell>
   );

@@ -1,24 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/vigil/AppShell";
 import { MetricCard } from "@/components/vigil/MetricCard";
 import { DecisionCard } from "@/components/vigil/DecisionCard";
 import { AgentActivityFeed } from "@/components/vigil/AgentActivityFeed";
 import { CriticalDecisionTimeline } from "@/components/vigil/CriticalDecisionTimeline";
 import { RunAgentCheckButton } from "@/components/vigil/RunAgentCheck";
-import { decisions, globalStats } from "@/lib/vigil/mock-data";
 import { AlertTriangle, CheckCircle2, GaugeCircle, Flame } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({
-    meta: [
-      { title: "Decision Command Center — Vigil" },
-      { name: "description", content: "Monitor whether critical business decisions are backed by trustworthy data." },
-    ],
-  }),
   component: DashboardPage,
 });
 
 function DashboardPage() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["decisions"],
+    queryFn: async () => {
+      const res = await fetch("/api/decisions");
+      if (!res.ok) throw new Error("Failed to fetch decisions");
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  const decisions = data?.decisions ?? [];
+  const stats = data?.stats ?? { monitored: 0, atRisk: 0, recoveries: 0, avgReadiness: 0 };
+
+  if (isLoading) {
+    return (
+      <AppShell title="Decision Command Center" subtitle="Loading...">
+        <div className="animate-pulse space-y-4">
+          <div className="h-24 bg-surface/40 rounded-2xl" />
+          <div className="h-64 bg-surface/40 rounded-2xl" />
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell
       title="Decision Command Center"
@@ -28,31 +46,30 @@ function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Critical decisions today"
-          value={globalStats.monitored}
+          value={stats.monitored}
           hint="Across executive desks"
           icon={<Flame className="size-4" />}
         />
         <MetricCard
           label="Safe to proceed"
-          value={globalStats.monitored - globalStats.atRisk}
+          value={stats.monitored - stats.atRisk}
           hint="Verified by Vigil this morning"
           icon={<CheckCircle2 className="size-4 text-trusted" />}
         />
         <MetricCard
           label="Require attention"
-          value={globalStats.atRisk}
+          value={stats.atRisk}
           hint="Awaiting data refresh"
           icon={<AlertTriangle className="size-4 text-risk" />}
         />
         <MetricCard
           label="Organizational confidence"
-          value={`${globalStats.avgReadiness}%`}
+          value={`${stats.avgReadiness}%`}
           hint="Weighted across all monitored decisions"
           icon={<GaugeCircle className="size-4" />}
         />
       </div>
 
-      {/* Bento: decisions + intelligence feed */}
       <div className="mt-8 grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-5">
           <div className="flex items-end justify-between">
@@ -65,7 +82,7 @@ function DashboardPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            {decisions.map((d, i) => (
+            {decisions.map((d: any, i: number) => (
               <DecisionCard key={d.id} decision={d} index={i} />
             ))}
           </div>

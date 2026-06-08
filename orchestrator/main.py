@@ -12,7 +12,8 @@ from orchestrator.api.slas import router as slas_router
 from orchestrator.webhook import router as webhook_router
 from orchestrator.api.incidents import router as incidents_router
 from orchestrator.api.connectors import router as connectors_router
-from orchestrator.scheduler import scheduler_loop
+from orchestrator.api.decisions import router as decisions_router
+from orchestrator.scheduler import scheduler_loop, run_proactive_check
 from orchestrator.invoker import close_runner
 
 
@@ -45,8 +46,15 @@ app.include_router(slas_router)
 app.include_router(webhook_router)
 app.include_router(incidents_router)
 app.include_router(connectors_router)
+app.include_router(decisions_router)
 
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "vigil-orchestrator"}
+
+
+@app.post("/api/run-check")
+async def trigger_agent_check():
+    await run_proactive_check()
+    return {"status": "completed"}
