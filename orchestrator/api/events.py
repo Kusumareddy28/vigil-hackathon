@@ -7,6 +7,8 @@ from typing import AsyncGenerator
 from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse
 
+from orchestrator.config import settings
+
 router = APIRouter()
 
 _subscribers: list[asyncio.Queue] = []
@@ -27,8 +29,13 @@ async def broadcast(event_type: str, data: dict) -> None:
 async def _event_generator(queue: asyncio.Queue) -> AsyncGenerator[dict, None]:
     try:
         while True:
-            message = await queue.get()
-            yield message
+            try:
+                message = await asyncio.wait_for(
+                    queue.get(), timeout=settings.sse_heartbeat_seconds
+                )
+                yield message
+            except asyncio.TimeoutError:
+                yield {"event": "ping", "data": ""}
     except asyncio.CancelledError:
         pass
 
@@ -39,6 +46,7 @@ async def sse_stream():
     _subscribers.append(queue)
 
     async def generate():
+        yield {"event": "connected", "data": json.dumps({"status": "ok"})}
         try:
             async for message in _event_generator(queue):
                 yield message

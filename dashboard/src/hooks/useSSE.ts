@@ -51,12 +51,17 @@ function mapSSEToFeedEvent(eventType: string, data: any): AgentFeedEvent | null 
   }
 
   if (eventType === "incident") {
+    const connector = data.connector_id || data.connector || "unknown";
+    const failureType = data.failure_type || data.type || "Issue";
+    const resolved = data.resolved_at || data.resolved;
     return {
       id,
       time,
-      kind: data.resolved ? "recover" : "detect",
-      title: `${data.resolved ? "Resolved" : "Incident"}: ${data.type || "Unknown"} on ${data.connector}`,
-      detail: data.resolved ? `Resolved in ${data.duration_seconds}s` : undefined,
+      kind: resolved ? "recover" : "detect",
+      title: `${resolved ? "Resolved" : "Incident"}: ${failureType.replace(/_/g, " ")} on ${connector}`,
+      detail: resolved && data.time_to_resolve_seconds
+        ? `Auto-resolved in ${data.time_to_resolve_seconds}s`
+        : data.agent_actions?.length ? `Agent acting: ${data.agent_actions[0]}` : undefined,
     };
   }
 
@@ -72,7 +77,7 @@ export function useSSE(maxEvents = 50) {
     const es = new EventSource("/api/events");
     esRef.current = es;
 
-    es.onopen = () => setConnected(true);
+    es.addEventListener("connected", () => setConnected(true));
     es.onerror = () => setConnected(false);
 
     const handler = (e: MessageEvent) => {
