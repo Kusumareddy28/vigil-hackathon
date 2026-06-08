@@ -10,7 +10,7 @@ export const Route = createFileRoute("/incidents")({
 });
 
 const SEVERITY_CLASS: Record<string, string> = {
-  low: "text-muted-foreground bg-muted/30",
+  low: "text-trusted bg-trusted/10",
   medium: "text-risk bg-risk/10",
   high: "text-risk bg-risk/15",
   critical: "text-blocked bg-blocked/15",
@@ -46,9 +46,12 @@ function IncidentsPage() {
           <div className="px-6 py-8 text-sm text-muted-foreground">No incidents recorded yet.</div>
         ) : (
           incidents.map((inc: any, i: number) => {
-            const severity = inc.failure_type === "AUTH_EXPIRED" ? "critical" : inc.failure_type === "SCHEMA_CHANGE" ? "high" : "medium";
+            const severity = inc.failure_type === "AUTH_EXPIRED" ? "critical" : inc.failure_type === "SCHEMA_CHANGE" ? "high" : inc.failure_type === "PROACTIVE_INTERVENTION" ? "low" : "medium";
             const outcome = inc.resolved_at ? "recovered" : inc.human_intervention_required ? "human_intervention" : "in_progress";
-            const agentAction = inc.agent_actions?.map((a: any) => typeof a === "string" ? a : a.action).join(" → ") || "Investigating...";
+            const rawActions = inc.agent_actions?.map((a: any) => typeof a === "string" ? a : a.action) || [];
+            const agentAction = rawActions.length > 0
+              ? rawActions.map((a: string) => a === "sync_connection" ? "Triggered early sync" : a.replace(/_/g, " ")).join(" → ")
+              : "Investigating...";
             const detected = inc.detected_at ? new Date(inc.detected_at).toLocaleString([], { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" }) : "";
 
             return (

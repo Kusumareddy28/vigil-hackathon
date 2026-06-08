@@ -187,9 +187,21 @@ async def _build_decision(sla: dict, db) -> dict:
         elif actions and isinstance(actions[0], str):
             detail = actions[0]
 
+        # Human-readable titles
+        failure_type = inc.get("failure_type", "Unknown")
+        if failure_type == "PROACTIVE_INTERVENTION":
+            if kind == "recover":
+                title = "Early sync completed successfully"
+            else:
+                title = "Triggered proactive early sync"
+            if detail == "sync_connection":
+                detail = "Refreshed connector ahead of deadline"
+        else:
+            title = f"{failure_type.replace('_', ' ').title()} detected"
+
         timeline.append({
             "time": time_str,
-            "title": f"{inc.get('failure_type', 'Unknown')} detected",
+            "title": title,
             "detail": detail,
             "kind": kind,
         })
@@ -203,8 +215,10 @@ async def _build_decision(sla: dict, db) -> dict:
         recommendation = latest_trace["assessment"].get("reasoning", "No assessment yet.")
     elif latest_trace and latest_trace.get("escalation_message"):
         recommendation = latest_trace["escalation_message"]
+    elif status == "ready":
+        recommendation = "All data dependencies are fresh and within tolerance. Safe to proceed — no agent intervention required."
     else:
-        recommendation = "Awaiting first agent assessment."
+        recommendation = "Monitoring in progress. Agent will assess when risk indicators change."
 
     confidence_summary = recommendation[:120] + "..." if len(recommendation) > 120 else recommendation
 

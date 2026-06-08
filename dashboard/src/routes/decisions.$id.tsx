@@ -128,7 +128,7 @@ function DecisionDetailPage() {
                 <div className="min-w-0">
                   <p className="text-sm">{d.name}</p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {d.source} · synced {d.lastSync}
+                    {d.source} · {d.freshnessLabel || "No sync recorded"}
                     {d.notes ? ` · ${d.notes}` : ""}
                   </p>
                 </div>
