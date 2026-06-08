@@ -1,30 +1,41 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/vigil/AppShell";
 import { AgentActivityFeed } from "@/components/vigil/AgentActivityFeed";
 import { MetricCard } from "@/components/vigil/MetricCard";
 import { Activity, Brain, ShieldCheck, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/agent-activity")({
-  head: () => ({
-    meta: [
-      { title: "Agent Activity — Vigil" },
-      { name: "description", content: "A live stream of every decision Vigil's agent makes on your behalf." },
-    ],
-  }),
   component: AgentActivityPage,
 });
 
 function AgentActivityPage() {
+  const { data: stats } = useQuery({
+    queryKey: ["agent-stats"],
+    queryFn: async () => {
+      const res = await fetch("/api/agent-stats");
+      if (!res.ok) throw new Error("Failed to fetch stats");
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  const medianLabel = stats?.medianResponseSeconds
+    ? stats.medianResponseSeconds < 60
+      ? `${stats.medianResponseSeconds}s`
+      : `${(stats.medianResponseSeconds / 60).toFixed(1)}m`
+    : "—";
+
   return (
     <AppShell
       title="Agent Activity"
       subtitle="A live stream of every action Vigil takes to keep your decisions trustworthy."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Actions in last 24h" value={142} hint="Auto-recoveries, refreshes, escalations" icon={<Activity className="size-4" />} />
-        <MetricCard label="Reasoning cycles" value={"3.1k"} hint="Decision evaluations" icon={<Brain className="size-4 text-ai" />} />
-        <MetricCard label="Auto-recoveries" value={28} hint="Without human intervention" icon={<ShieldCheck className="size-4 text-trusted" />} />
-        <MetricCard label="Median response" value="4.2s" hint="From detection to action" icon={<Zap className="size-4" />} />
+        <MetricCard label="Actions in last 24h" value={stats?.actions24h ?? 0} hint="Agent reasoning cycles today" icon={<Activity className="size-4" />} />
+        <MetricCard label="Total reasoning cycles" value={stats?.reasoningCycles ?? 0} hint="All-time decision evaluations" icon={<Brain className="size-4 text-ai" />} />
+        <MetricCard label="Auto-recoveries" value={stats?.autoRecoveries ?? 0} hint="Without human intervention" icon={<ShieldCheck className="size-4 text-trusted" />} />
+        <MetricCard label="Median response" value={medianLabel} hint="From detection to resolution" icon={<Zap className="size-4" />} />
       </div>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-3">
@@ -36,8 +47,8 @@ function AgentActivityPage() {
           <h3 className="font-display text-xl text-gradient mt-1">How Vigil thinks</h3>
           <ol className="mt-5 space-y-4 text-sm">
             {[
-              { n: "01", t: "Senses", d: "Continuously watches 14+ source systems for freshness, drift, and anomalies." },
-              { n: "02", t: "Reasons", d: "Cross-references the decision dependency graph and 90 days of incident history." },
+              { n: "01", t: "Senses", d: "Continuously watches source systems for freshness, drift, and anomalies." },
+              { n: "02", t: "Reasons", d: "Cross-references the decision dependency graph and incident history." },
               { n: "03", t: "Acts", d: "Triggers refreshes, reroutes, or escalations before a decision is impacted." },
               { n: "04", t: "Reports", d: "Updates readiness and tells you, in plain language, whether to proceed." },
             ].map((s) => (

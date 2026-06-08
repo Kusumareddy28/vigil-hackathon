@@ -126,7 +126,19 @@ async def _build_decision(sla: dict, db) -> dict:
     risk_level = None
     if latest_trace and latest_trace.get("assessment"):
         risk_level = latest_trace["assessment"].get("risk_level")
-    readiness = _readiness_from_risk(risk_level)
+        readiness = _readiness_from_risk(risk_level)
+    else:
+        # No agent trace — use Layer 1 heuristic from health data
+        health_main = await db.connector_health.find_one(
+            {"connector_id": connector_id}, sort=[("date", -1)]
+        )
+        failure_rate = health_main.get("failure_rate_7d", 0) if health_main else 0
+        if failure_rate < 0.05:
+            readiness = 95
+        elif failure_rate < 0.15:
+            readiness = 75
+        else:
+            readiness = 55
     status = _status_from_readiness(readiness)
 
     # Confidence drivers

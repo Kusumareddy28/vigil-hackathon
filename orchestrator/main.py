@@ -13,6 +13,7 @@ from orchestrator.webhook import router as webhook_router
 from orchestrator.api.incidents import router as incidents_router
 from orchestrator.api.connectors import router as connectors_router
 from orchestrator.api.decisions import router as decisions_router
+from orchestrator.api.stats import router as stats_router
 from orchestrator.scheduler import scheduler_loop, run_proactive_check
 from orchestrator.invoker import close_runner
 
@@ -47,6 +48,7 @@ app.include_router(webhook_router)
 app.include_router(incidents_router)
 app.include_router(connectors_router)
 app.include_router(decisions_router)
+app.include_router(stats_router)
 
 
 @app.get("/health")
