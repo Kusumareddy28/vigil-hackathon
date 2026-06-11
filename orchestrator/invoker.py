@@ -162,12 +162,17 @@ async def invoke_agent(context: dict) -> ReasoningTrace:
     )
 
     response_text = ""
+    all_text_parts = []
     try:
         async for event in runner.run_async(
             user_id="system",
             session_id=session.id,
             new_message=content,
         ):
+            if event.content and event.content.parts:
+                for p in event.content.parts:
+                    if p.text:
+                        all_text_parts.append(p.text)
             if event.is_final_response() and event.content and event.content.parts:
                 response_text = "".join(
                     p.text or "" for p in event.content.parts
@@ -179,6 +184,12 @@ async def invoke_agent(context: dict) -> ReasoningTrace:
         await _session_service.delete_session(
             app_name="vigil", user_id="system", session_id=session.id
         )
+
+    if not response_text and all_text_parts:
+        response_text = "\n".join(all_text_parts)
+        logger.info(f"Used accumulated text parts ({len(all_text_parts)} parts)")
+
+    logger.info(f"Agent response length: {len(response_text)} chars, preview: {response_text[:200]}")
 
     parsed = _extract_json_from_response(response_text)
     trace = _coerce_trace(parsed, context, response_text)
