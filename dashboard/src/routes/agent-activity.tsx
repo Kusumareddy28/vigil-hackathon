@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/vigil/AppShell";
 import { AgentActivityFeed } from "@/components/vigil/AgentActivityFeed";
 import { MetricCard } from "@/components/vigil/MetricCard";
+import { apiFetch } from "@/lib/api";
 import { Activity, Brain, ShieldCheck, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/agent-activity")({
@@ -13,7 +14,7 @@ function AgentActivityPage() {
   const { data: stats } = useQuery({
     queryKey: ["agent-stats"],
     queryFn: async () => {
-      const res = await fetch("/api/agent-stats");
+      const res = await apiFetch("/api/agent-stats");
       if (!res.ok) throw new Error("Failed to fetch stats");
       return res.json();
     },

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/vigil/AppShell";
 import { DecisionCard } from "@/components/vigil/DecisionCard";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/decisions/")({
   component: DecisionsPage,
@@ -11,7 +12,7 @@ function DecisionsPage() {
   const { data } = useQuery({
     queryKey: ["decisions"],
     queryFn: async () => {
-      const res = await fetch("/api/decisions");
+      const res = await apiFetch("/api/decisions");
       if (!res.ok) throw new Error("Failed to fetch decisions");
       return res.json();
     },

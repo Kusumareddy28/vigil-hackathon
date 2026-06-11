@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     scheduler_interval_seconds: int = 300
     sse_heartbeat_seconds: int = 15
     log_level: str = "INFO"
+    frontend_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
 
     class Config:
         env_file = ".env"

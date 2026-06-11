@@ -19,6 +19,18 @@ from orchestrator.scheduler import scheduler_loop, run_proactive_check
 from orchestrator.invoker import close_runner
 
 
+def _allowed_origins() -> list[str]:
+    return [
+        origin.strip()
+        for origin in os.getenv("FRONTEND_ORIGINS", "").split(",")
+        if origin.strip()
+    ] or [
+        origin.strip()
+        for origin in settings.frontend_origins.split(",")
+        if origin.strip()
+    ]
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await get_db()
@@ -41,8 +53,8 @@ app = FastAPI(title="Vigil", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_allowed_origins(),
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

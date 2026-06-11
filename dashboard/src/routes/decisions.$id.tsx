@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/vigil/StatusBadge";
 import { ConfidenceDrivers } from "@/components/vigil/ConfidenceDrivers";
 import { Countdown } from "@/components/vigil/Countdown";
 import { RunAgentCheckButton } from "@/components/vigil/RunAgentCheck";
+import { apiFetch } from "@/lib/api";
 import type { Decision, DecisionAudit } from "@/lib/vigil/types";
 import { ArrowLeft, User, Flame, Sparkles, AlertTriangle, RotateCcw } from "lucide-react";
 
@@ -25,7 +26,7 @@ function DecisionDetailPage() {
   const { data: decision, isLoading, refetch } = useQuery({
     queryKey: ["decision", id],
     queryFn: async () => {
-      const res = await fetch(`/api/decisions/${id}`);
+      const res = await apiFetch(`/api/decisions/${id}`);
       if (!res.ok) throw new Error("Decision not found");
       return res.json() as Promise<Decision>;
     },
@@ -35,7 +36,7 @@ function DecisionDetailPage() {
   const { data: audit } = useQuery({
     queryKey: ["decision-audit", id],
     queryFn: async () => {
-      const res = await fetch(`/api/decisions/${id}/audit`);
+      const res = await apiFetch(`/api/decisions/${id}/audit`);
       if (!res.ok) throw new Error("Decision audit not found");
       return res.json() as Promise<DecisionAudit>;
     },
@@ -46,7 +47,7 @@ function DecisionDetailPage() {
   const runAgentCheck = async () => {
     setRunning(true);
     try {
-      await fetch("/api/run-check", { method: "POST" });
+      await apiFetch("/api/run-check", { method: "POST" });
       setTimeout(() => {
         refetch();
         setRunning(false);

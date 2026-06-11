@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Brain, CheckCircle2, Eye, Sparkles, Wrench } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 import type { AgentFeedEvent } from "@/lib/vigil/types";
 import { useSSE } from "@/hooks/useSSE";
 
@@ -18,7 +19,7 @@ export function AgentActivityFeed({ compact = false }: { compact?: boolean }) {
   const { data } = useQuery<{ events: AgentFeedEvent[] }>({
     queryKey: ["agent-activity-history"],
     queryFn: async () => {
-      const res = await fetch("/api/agent-activity-history");
+      const res = await apiFetch("/api/agent-activity-history");
       if (!res.ok) throw new Error("Failed to fetch agent activity history");
       return res.json();
     },
