@@ -6,6 +6,7 @@ import { DecisionCard } from "@/components/vigil/DecisionCard";
 import { AgentActivityFeed } from "@/components/vigil/AgentActivityFeed";
 import { CriticalDecisionTimeline } from "@/components/vigil/CriticalDecisionTimeline";
 import { RunAgentCheckButton } from "@/components/vigil/RunAgentCheck";
+import { apiFetch } from "@/lib/api";
 import { AlertTriangle, CheckCircle2, GaugeCircle, Flame } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
@@ -16,7 +17,7 @@ function DashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["decisions"],
     queryFn: async () => {
-      const res = await fetch("/api/decisions");
+      const res = await apiFetch("/api/decisions");
       if (!res.ok) throw new Error("Failed to fetch decisions");
       return res.json();
     },

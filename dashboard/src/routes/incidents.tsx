@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/vigil/AppShell";
 import { StatusBadge } from "@/components/vigil/StatusBadge";
+import { apiFetch } from "@/lib/api";
 import { motion } from "framer-motion";
 import { CircleUser, Bot } from "lucide-react";
 
@@ -20,7 +21,7 @@ function IncidentsPage() {
   const { data } = useQuery({
     queryKey: ["incidents"],
     queryFn: async () => {
-      const res = await fetch("/api/incidents");
+      const res = await apiFetch("/api/incidents");
       if (!res.ok) throw new Error("Failed to fetch incidents");
       return res.json();
     },

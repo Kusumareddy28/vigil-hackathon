@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { apiEventSource } from "@/lib/api";
 import type { AgentFeedEvent } from "@/lib/vigil/types";
 
 function mapSSEToFeedEvent(eventType: string, data: any): AgentFeedEvent | null {
@@ -74,7 +75,7 @@ export function useSSE(maxEvents = 50) {
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    const es = new EventSource("/api/events");
+    const es = apiEventSource("/api/events");
     esRef.current = es;
 
     es.addEventListener("connected", () => setConnected(true));
