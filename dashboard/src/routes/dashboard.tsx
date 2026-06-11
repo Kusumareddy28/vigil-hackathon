@@ -82,9 +82,14 @@ function DashboardPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            {decisions.map((d: any, i: number) => (
-              <DecisionCard key={d.id} decision={d} index={i} />
-            ))}
+            {decisions.map((d: any, i: number) => {
+              const isLastOddCard = decisions.length % 2 === 1 && i === decisions.length - 1;
+              return (
+                <div key={d.id} className={isLastOddCard ? "md:col-span-2" : undefined}>
+                  <DecisionCard decision={d} index={i} />
+                </div>
+              );
+            })}
           </div>
 
           <CriticalDecisionTimeline decisions={decisions} />
