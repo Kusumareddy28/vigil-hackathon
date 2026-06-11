@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { Activity, Brain, CheckCircle2, Eye, Sparkles, Wrench } from "lucide-react";
 import type { AgentFeedEvent } from "@/lib/vigil/types";
 import { useSSE } from "@/hooks/useSSE";
@@ -13,7 +14,24 @@ const kindMeta: Record<AgentFeedEvent["kind"], { icon: typeof Brain; tone: strin
 };
 
 export function AgentActivityFeed({ compact = false }: { compact?: boolean }) {
-  const { events, connected } = useSSE(30);
+  const { events: liveEvents, connected } = useSSE(30);
+  const { data } = useQuery<{ events: AgentFeedEvent[] }>({
+    queryKey: ["agent-activity-history"],
+    queryFn: async () => {
+      const res = await fetch("/api/agent-activity-history");
+      if (!res.ok) throw new Error("Failed to fetch agent activity history");
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+
+  const historyEvents = data?.events ?? [];
+  const seen = new Set<string>();
+  const events = [...liveEvents, ...historyEvents].filter((event) => {
+    if (seen.has(event.id)) return false;
+    seen.add(event.id);
+    return true;
+  }).slice(0, 30);
 
   return (
     <div className="glass rounded-2xl p-6 h-full flex flex-col">
@@ -37,7 +55,7 @@ export function AgentActivityFeed({ compact = false }: { compact?: boolean }) {
         {events.length === 0 ? (
           <div className="relative pl-10 mt-4">
             <p className="text-sm text-muted-foreground">Waiting for agent activity...</p>
-            <p className="text-xs text-muted-foreground mt-1">Events will appear here in real-time as the agent assesses SLAs and takes action.</p>
+            <p className="text-xs text-muted-foreground mt-1">Events will appear here as the agent assesses SLAs and takes action.</p>
           </div>
         ) : (
           <ul className="relative space-y-4 pr-1 overflow-y-auto h-full scroll-fade">

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,13 +22,17 @@ from orchestrator.invoker import close_runner
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await get_db()
-    task = asyncio.create_task(scheduler_loop())
+    task = None
+    # Scheduler can be disabled by setting START_SCHEDULER=0 in the environment.
+    if os.getenv("START_SCHEDULER", "1") != "0":
+        task = asyncio.create_task(scheduler_loop())
     yield
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
+    if task is not None:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
     await close_runner()
     await close_db()
 

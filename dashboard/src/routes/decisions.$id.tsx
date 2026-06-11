@@ -6,11 +6,12 @@ import { ReadinessGauge } from "@/components/vigil/ReadinessGauge";
 import { DependencyGraph } from "@/components/vigil/DependencyGraph";
 import { AgentReasoningTrace } from "@/components/vigil/AgentReasoningTrace";
 import { AgentActionTimeline } from "@/components/vigil/AgentActionTimeline";
+import { DecisionAuditTrail } from "@/components/vigil/DecisionAuditTrail";
 import { StatusBadge } from "@/components/vigil/StatusBadge";
 import { ConfidenceDrivers } from "@/components/vigil/ConfidenceDrivers";
 import { Countdown } from "@/components/vigil/Countdown";
 import { RunAgentCheckButton } from "@/components/vigil/RunAgentCheck";
-import type { Decision } from "@/lib/vigil/types";
+import type { Decision, DecisionAudit } from "@/lib/vigil/types";
 import { ArrowLeft, User, Flame, Sparkles, AlertTriangle, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/decisions/$id")({
@@ -29,6 +30,17 @@ function DecisionDetailPage() {
       return res.json() as Promise<Decision>;
     },
     refetchInterval: 15000,
+  });
+
+  const { data: audit } = useQuery({
+    queryKey: ["decision-audit", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/decisions/${id}/audit`);
+      if (!res.ok) throw new Error("Decision audit not found");
+      return res.json() as Promise<DecisionAudit>;
+    },
+    refetchInterval: 15000,
+    enabled: !!decision,
   });
 
   const runAgentCheck = async () => {
@@ -148,6 +160,12 @@ function DecisionDetailPage() {
           <AgentActionTimeline events={decision.timeline} />
         </div>
       </div>
+
+      {audit && (
+        <div className="mt-5">
+          <DecisionAuditTrail audit={audit} />
+        </div>
+      )}
     </AppShell>
   );
 }

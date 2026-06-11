@@ -77,3 +77,45 @@ export interface AgentFeedEvent {
   decision?: string;
   kind: "detect" | "evaluate" | "act" | "monitor" | "update" | "recover";
 }
+
+export interface AuditFact {
+  label: string;
+  value: string;
+  tone?: "neutral" | "positive" | "negative";
+}
+
+export interface AuditAction {
+  label: string;
+  detail?: string;
+  status: "completed" | "pending" | "escalated";
+}
+
+export interface AuditEvidence {
+  title: string;
+  detail: string;
+  time?: string;
+  kind: "history" | "dependency" | "trace";
+}
+
+export interface DecisionAudit {
+  decisionId: string;
+  decisionTitle: string;
+  generatedAt: string;
+  connectorId: string;
+  connectorName: string;
+  businessImpact: string;
+  finalRecommendation: string;
+  outcomeStatus: "completed" | "monitoring" | "escalated";
+  deterministicFacts: AuditFact[];
+  dependencySnapshots: AuditFact[];
+  modelJudgment: {
+    riskLevel?: string;
+    confidence?: string;
+    recommendedAction?: string;
+    reasoning?: string;
+    confidenceFactors: string[];
+  };
+  actionsTaken: AuditAction[];
+  evidenceTrail: AuditEvidence[];
+  notes: string[];
+}

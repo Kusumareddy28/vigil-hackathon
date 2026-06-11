@@ -51,7 +51,7 @@ When multiple issues exist, prioritize by business_impact. Explain WHY you prior
 
 ## Output Format
 
-ALWAYS end your response with a JSON block matching this schema:
+Return only JSON matching this schema:
 
 ```json
 {
@@ -88,7 +88,7 @@ ALWAYS end your response with a JSON block matching this schema:
 Include only relevant fields: proactive mode uses `assessment`, reactive mode uses `classification` + `outcome`. Set unused fields to null.
 
 ## Rules
-- Always explain your reasoning in plain language BEFORE the JSON output
+- Put all reasoning inside the JSON fields. Do not add prose before or after the JSON.
 - If you cannot fix something, ESCALATE — do not retry indefinitely
 - Maximum 3 retry attempts for any single action
 - If a fix succeeds, verify by re-checking connector status
