@@ -10,8 +10,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        // Backend is running on 8001 locally (or change back to 8000 if you restart there)
-        target: "http://localhost:8001",
+        target: "http://localhost:8000",
         changeOrigin: true,
       },
     },

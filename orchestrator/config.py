@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     google_api_key: str = ""
     google_cloud_project: str = ""
     google_cloud_location: str = "us-central1"
+    google_genai_use_vertexai: str = ""
     scheduler_interval_seconds: int = 300
     sse_heartbeat_seconds: int = 15
     log_level: str = "INFO"
